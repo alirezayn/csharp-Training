@@ -1,0 +1,120 @@
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data;
+using System.Drawing;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Windows.Forms;
+
+namespace WindowsFormsApp7
+{
+    public partial class Form1 : Form
+    {
+        public Form1()
+        {
+            InitializeComponent();
+            foreach (Control c in this.Controls)
+            {
+                if (c is TextBox)
+                {
+                    TextBox textBox = (TextBox)c;
+                    textBox.MouseClick += TextBox_Clicked;
+                }
+            }
+        }
+        List<Dictionary<string, string>> Person = new List<Dictionary<string, string>>();
+        public void TextBox_Clicked(object sender, EventArgs e)
+        {
+            if (sender is TextBox)
+            {
+                TextBox textBox = (TextBox)sender;
+                textBox.Text = string.Empty;
+                textBox.ForeColor = Color.Black;
+            }
+        }
+
+        private void button2_Click(object sender, EventArgs e)
+        {
+            Person.Add(new Dictionary<string, string> {
+                { "Name", $"{textBox1.Text}" },
+                { "Family", $"{textBox2.Text}" },
+                { "Age", $"{textBox3.Text}" },
+                { "PersonalID",$"{textBox4.Text}" }
+            });
+            textBox1.Text = "";
+            textBox2.Text = "";
+            textBox3.Text = "";
+            textBox4.Text = "";
+            listBox1.Items.Clear();
+            foreach (var item in Person)
+            {
+                listBox1.Items.Add($"{item["Name"]}-{item["Family"]}-{item["Age"]}-{item["PersonalID"]}");
+            }
+        }
+
+        private void button1_Click(object sender, EventArgs e)
+        {
+            listBox1.Items.Clear();
+            foreach (var item in Person)
+            {
+                if (item["Name"] == textBox5.Text || item["Family"] == textBox5.Text || item["Age"] == textBox5.Text || item["PersonalID"] == textBox5.Text)
+                {
+                    listBox1.Items.Add($"{item["Name"]}-{item["Family"]}-{item["Age"]}-{item["PersonalID"]}");
+                }
+            }
+        }
+
+        private void button3_Click(object sender, EventArgs e)
+        {
+            Person.RemoveAll(item => item.ContainsValue(textBox6.Text));
+            listBox1.Items.Clear();
+            foreach (var item in Person)
+            {
+                listBox1.Items.Add($"{item["Name"]}-{item["Family"]}-{item["Age"]}-{item["PersonalID"]}");
+            }
+            
+        }
+
+        private void button4_Click(object sender, EventArgs e)
+        {
+            listBox1.Items.Clear();
+            foreach (var item in Person)
+            {
+                if (item["PersonalID"] == textBox6.Text)
+                {
+                    item["Name"] = textBox1.Text;
+                    item["Family"] = textBox2.Text;
+                    item["Age"] = textBox3.Text;
+
+                }
+                listBox1.Items.Add($"{item["Name"]}-{item["Family"]}-{item["Age"]}-{item["PersonalID"]}");
+               
+            }
+            textBox1.Text = "";
+            textBox2.Text = "";
+            textBox3.Text = "";
+            textBox6.Text = "";
+            textBox4.Text = "";
+            button4.Enabled = false;
+            textBox4.Enabled = true;
+        }
+
+        private void button5_Click(object sender, EventArgs e)
+        {
+            foreach (var item in Person)
+            {
+                if (item["PersonalID"] == textBox6.Text)
+                {
+                    textBox1.Text = item["Name"];
+                    textBox2.Text = item["Family"];
+                    textBox3.Text = item["Age"];
+                    textBox4.Text = item["PersonalID"];
+                    textBox4.Enabled = false;
+                    button4.Enabled = true;
+                }
+            }
+        }
+    }
+}
