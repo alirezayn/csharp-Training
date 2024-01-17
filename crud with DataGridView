@@ -1,0 +1,124 @@
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data;
+using System.Drawing;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Windows.Forms;
+
+namespace DataGridView
+{
+    public partial class Form1 : Form
+    {
+        public Form1()
+        {
+            InitializeComponent(); 
+        }
+        bool check(string p)
+        {
+           
+            int columnIndex = dataGridView1.Columns["personalID"].Index;
+            foreach (DataGridViewRow row in dataGridView1.Rows)
+            {
+                if (row.Cells[columnIndex].Value != null)
+                {
+                    if (row.Cells[columnIndex].Value.ToString() == p)
+                    {
+                        return true;
+                    }
+                    else
+                    {
+                        return false;
+                    }
+                }
+            }
+            return false;
+        }
+        string delete()
+        {
+            if (dataGridView1.SelectedRows.Count > 0)
+            {
+                int selectedIndex = dataGridView1.SelectedRows[0].Index;
+                dataGridView1.Rows.RemoveAt(selectedIndex);
+                return "حذف با موفقیت انجام شد";
+            }
+            else
+            {
+                return "خطایی رخ داد";
+            }
+
+        }
+        string update(string name,string family,string tel)
+        {
+            if(dataGridView1.SelectedCells.Count > 0)
+            {
+                int selectedIndex = dataGridView1.SelectedCells[0].RowIndex;
+                dataGridView1.Rows[selectedIndex].Cells["name"].Value = name;
+                dataGridView1.Rows[selectedIndex].Cells["family"].Value = family;
+                dataGridView1.Rows[selectedIndex].Cells["telephone"].Value = tel;
+                return "تغییرات اعمال شد";
+            }
+            else
+            {
+                return "تغییرات اعمال نشد";
+            }
+        }
+        private void button1_Click(object sender, EventArgs e)
+        {
+            // add
+            if (check(textBox3.Text))
+            {
+                MessageBox.Show("کاربر تکرای");
+            }
+            else
+            {
+                string name = textBox1.Text;
+                string family = textBox2.Text;
+                string personal_id = textBox3.Text;
+                string tel = textBox4.Text;
+                dataGridView1.Rows.Add(name,family,tel,personal_id);
+                textBox1.Text = "";
+                textBox2.Text = "";
+                textBox3.Text = "";
+                textBox4.Text = "";
+            }
+
+        }
+        
+        private void button2_Click(object sender, EventArgs e)
+        {
+            // delete btn
+            string a = delete();
+            MessageBox.Show(a);
+        }
+
+
+        private void dataGridView1_RowHeaderMouseClick(object sender, DataGridViewCellMouseEventArgs e)
+        {
+            // add data to textBox
+            button2.Enabled = true;
+            button3.Enabled = true;
+            
+            if (dataGridView1.SelectedCells.Count > 0)
+            {
+                int selectedIndex = dataGridView1.SelectedCells[0].RowIndex;
+
+                textBox1.Text = dataGridView1.Rows[selectedIndex].Cells["name"].Value.ToString();
+                textBox2.Text = dataGridView1.Rows[selectedIndex].Cells["family"].Value.ToString();
+                textBox4.Text = dataGridView1.Rows[selectedIndex].Cells["telephone"].Value.ToString();
+                textBox3.Text = dataGridView1.Rows[selectedIndex].Cells["personalID"].Value.ToString();
+                textBox3.Enabled = false;
+                
+            }
+        }
+
+        private void button3_Click(object sender, EventArgs e)
+        {
+            //دکمه آپدیت
+            string up = update(textBox1.Text, textBox2.Text, textBox4.Text);
+            MessageBox.Show(up);
+        }
+    }
+}
