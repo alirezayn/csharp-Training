@@ -1,0 +1,128 @@
+# api/views.py 
+
+from django.shortcuts import render
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from django.shortcuts import get_object_or_404
+from django.utils import timezone
+from api.models import Payment, Order
+from rest_framework.viewsets import ModelViewSet
+from api.serializers import CartSerializer
+from cart.models import Cart
+import requests
+from django.conf import settings
+
+class PaymentVerifyView(APIView):
+    def get(self, request):
+        authority = request.GET.get('Authority')
+        status = request.GET.get('Status')
+
+        payment = get_object_or_404(Payment, authority=authority)
+
+        if status == 'OK':
+            # Verify the payment with Zarinpal
+            verify_url = 'https://api.zarinpal.com/pg/v4/payment/verify.json'
+            headers = {'Content-Type': 'application/json'}
+            data = {
+                'merchant_id': settings.ZARINPAL_MERCHANT_ID,
+                'authority': authority,
+                'amount': int(payment.amount * 10),  # Amount in Toman
+            }
+
+            response = requests.post(verify_url, json=data, headers=headers)
+            response_data = response.json()
+
+            if response_data['data']['code'] == 100:
+                # Payment was successful
+                payment.is_paid = True
+                payment.paid_at = timezone.now()
+                payment.save()
+
+                # Deactivate the cart or perform any other post-payment actions
+                payment.cart.is_active = False
+                payment.cart.save()
+
+                # Return success response with RefID
+                return Response({'message': 'Payment successful', 'ref_id': response_data['data']['ref_id']})
+            else:
+                # Payment verification failed
+                return Response({'error': response_data['errors']}, status=400)
+        else:
+            # Payment was not successful
+            return Response({'message': 'Payment was not successful'}, status=400)
+
+
+
+class CartViewSet(ModelViewSet):
+    queryset = Cart.objects.all()
+    serializer_class = CartSerializer
+
+
+
+# api/serializers.py 
+
+from rest_framework.serializers import ModelSerializer
+
+from cart.models import Cart
+class CartSerializer(ModelSerializer):
+    class Meta:
+        model = Cart
+        fields = '__all__'
+
+#api/urls.py
+
+
+from django.urls import path,include
+from .views import PaymentVerifyView,CartViewSet
+
+from rest_framework.routers import DefaultRouter
+
+route = DefaultRouter()
+
+route.register('cart',viewset=CartViewSet)
+urlpatterns = [
+    path('',include(route.urls)),
+    path('payment/verify/', PaymentVerifyView.as_view(), name='payment_verify'),
+]
+
+
+#urls.py این برای بخش تنظیمات اصلی هست
+
+"""
+URL configuration for supermarket project.
+
+The `urlpatterns` list routes URLs to views. For more information please see:
+    https://docs.djangoproject.com/en/5.0/topics/http/urls/
+Examples:
+Function views
+    1. Add an import:  from my_app import views
+    2. Add a URL to urlpatterns:  path('', views.home, name='home')
+Class-based views
+    1. Add an import:  from other_app.views import Home
+    2. Add a URL to urlpatterns:  path('', Home.as_view(), name='home')
+Including another URLconf
+    1. Import the include() function: from django.urls import include, path
+    2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
+"""
+from django.contrib import admin
+from django.urls import path,include
+from django.views.generic import TemplateView
+from django.conf import settings
+from django.conf.urls.static import static
+from products.views import home
+
+urlpatterns = [
+    path('admin/', admin.site.urls),
+    path('', include("products.urls")),
+    #path('products/', include('products.urls', namespace='products')),
+    path('products/', include(('products.urls', 'products'), namespace='products')),
+    path('cart/', include('cart.urls')),  # Include cart app URLs
+    path('comments/', include('comments.urls')),
+    path('users/', include('users.urls',namespace='users')),
+    path('', home, name='home'),  # Add this line to define the 'home' URL pattern
+    path('__debug__/', include('debug_toolbar.urls')),  # Include this line
+    path('api/',include('api.urls'))
+]+ static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
+
+ 
